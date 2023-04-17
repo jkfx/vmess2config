@@ -26,7 +26,43 @@ def parse_outbounds(filename):
                 if vmess.get("v") != "2":
                     sys.exit("not supportd vmess version")
                 outbounds.append(parse_vmess_outbound(vmess))
+    # return merge_outbounds_by_stream_settings(outbounds)
     return outbounds
+
+
+
+def merge_outbounds_by_stream_settings(outbounds):
+    """
+    todo: support protocols other than vmess
+    """
+    stream_settings_list = []
+    vnext_map = {}
+    for outbound in outbounds:
+        if outbound.get("streamSettings") in stream_settings_list:
+            index = stream_settings_list.index(outbound.get("streamSettings"))
+            if vnext_map.get(index):
+                vnext_map[index] += outbound.get("settings").get("vnext")
+            else:
+                vnext_map[index] = outbound.get("settings").get("vnext")
+        else:
+            stream_settings_list.append(outbound.get("streamSettings"))
+            vnext_map[len(stream_settings_list) - 1] = outbound.get("settings").get(
+                "vnext"
+            )
+    # todo path
+    new_outbounds = []
+    for index, stream_settings in enumerate(stream_settings_list):
+        outbound_obj = {
+            "protocol": "vmess",
+            "settings": {
+                "vnext": [],
+            },
+            "tag": "Proxy",
+        }
+        outbound_obj["streamSettings"] = stream_settings
+        outbound_obj["settings"]["vnext"] += vnext_map[index]
+        new_outbounds.append(outbound_obj)
+    return new_outbounds
 
 
 def parse_vmess_outbound(vmess):
@@ -46,7 +82,7 @@ def parse_vmess_outbound(vmess):
     else:
         outbound_obj["streamSettings"]["security"] = "none"
     if outbound_obj["streamSettings"].get("security") == "tls":
-        outbound_obj["tlsSettings"] = parse_tls(vmess)
+        outbound_obj["streamSettings"]["tlsSettings"] = parse_tls(vmess)
     net = vmess.get("net")
     if net == "tcp":
         outbound_obj["streamSettings"]["tcpSettings"] = parse_tcp(vmess)
@@ -154,7 +190,7 @@ def parse_tls(vmess):
     tls_obj = {
         "serverName": vmess.get("sni", ""),
         "alpn": vmess.get("alpn", "h2,http/1.1").split(","),
-        "allowInsecure": True,
+        "allowInsecure": False,
     }
     if vmess.get("fp"):
         tls_obj["pinnedPeerCertificateChainSha256"] = vmess.get("fp")
