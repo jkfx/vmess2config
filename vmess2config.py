@@ -30,7 +30,6 @@ def parse_outbounds(filename):
     return outbounds
 
 
-
 def merge_outbounds_by_stream_settings(outbounds):
     """
     todo: support protocols other than vmess
@@ -189,9 +188,10 @@ def parse_grpc(vmess):
 def parse_tls(vmess):
     tls_obj = {
         "serverName": vmess.get("sni", ""),
-        # "alpn": vmess.get("alpn", "h2,http/1.1").split(","),
         "allowInsecure": False,
     }
+    if vmess.get("alpn"):
+        tls_obj["alpn"] = vmess.get("alpn").split(",")
     # if vmess.get("fp"):
     #     tls_obj["pinnedPeerCertificateChainSha256"] = vmess.get("fp")
     return tls_obj
