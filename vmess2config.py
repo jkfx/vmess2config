@@ -189,11 +189,11 @@ def parse_grpc(vmess):
 def parse_tls(vmess):
     tls_obj = {
         "serverName": vmess.get("sni", ""),
-        "alpn": vmess.get("alpn", "h2,http/1.1").split(","),
+        # "alpn": vmess.get("alpn", "h2,http/1.1").split(","),
         "allowInsecure": False,
     }
-    if vmess.get("fp"):
-        tls_obj["pinnedPeerCertificateChainSha256"] = vmess.get("fp")
+    # if vmess.get("fp"):
+    #     tls_obj["pinnedPeerCertificateChainSha256"] = vmess.get("fp")
     return tls_obj
 
 
